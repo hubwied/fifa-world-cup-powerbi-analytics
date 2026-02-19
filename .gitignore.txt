@@ -1,0 +1,11 @@
+
+*.pbi.user
+*.pbix.temp
+*.pbit
+*.pbip
+
+
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+ehthumbs.db
