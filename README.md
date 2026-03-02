@@ -12,10 +12,16 @@ The dataset for this project was sourced from the **Maven Analytics Data Playgro
 ## 📸 Dashboard Preview
 Below are the visual results of the analysis:
 
-![Historical Analysis](dashboard_history.png)
+![All time World Cup Analysis](All time World Cup Analysis.png)
 *Trends in goals and attendance across all tournaments (1930-2018).*
 
-![2022 Squads Analysis](dashboard_2022.png)
+![All time World Cup Matches Analysis](All time World Cup Matches Analysis.png)
+*Detailed look at player demographics and club representation for Qatar 2022.*
+
+![Qatar 2022 Squad Insights](Qatar 2022 Squad Insights.png)
+*Detailed look at player demographics and club representation for Qatar 2022.*
+
+![International Trends & Home Adventage](International Trends & Home Adventage.png)
 *Detailed look at player demographics and club representation for Qatar 2022.*
 
 ## 📁 Repository Files
@@ -45,14 +51,43 @@ The project utilizes a **Star Schema** relational model for optimal performance 
 Here are examples of the calculations used to power the visualizations:
 
 
--- Total Goals (Home + Away)
-Total Goals = SUM('world_cup_matches'[Home Goals]) + SUM('world_cup_matches'[Away Goals])
+-- Smart Medal Rank
+Smart Medal Rank = 
+VAR Total = COUNTROWS('Top 4 Statistics')
+VAR Gold = COUNTROWS(FILTER('Top 4 Statistics', 'Top 4 Statistics'[Result] = "1st Place"))
+VAR Silver = COUNTROWS(FILTER('Top 4 Statistics', 'Top 4 Statistics'[Result] = "2nd Place"))
+VAR Bronze = COUNTROWS(FILTER('Top 4 Statistics', 'Top 4 Statistics'[Result] = "3rd Place"))
+RETURN Total + (Gold * 0.01) + (Silver * 0.0001) + (Bronze * 0.000001)
 
--- Home Team Win Percentage
-Home Win % = 
-DIVIDE(
-    CALCULATE(COUNTROWS('world_cup_matches'), 'world_cup_matches'[Home Goals] > 'world_cup_matches'[Away Goals]),
-    COUNTROWS('world_cup_matches')
+-- Total Goals Scored
+Total Goals Scored = 
+VAR SelectedCountry = SELECTEDVALUE('All WC teams'[Country]) 
+VAR HomeGoals = CALCULATE(SUM('world_cup_matches'[Home Goals]), 'world_cup_matches'[Home Team] = SelectedCountry)
+VAR AwayGoals = CALCULATE(SUM('world_cup_matches'[Away Goals]), 'world_cup_matches'[Away Team] = SelectedCountry)
+
+RETURN 
+IF(
+    ISFILTERED('All WC teams'[Country]), 
+    HomeGoals + AwayGoals, 
+    SUM('world_cup_matches'[Home Goals]) + SUM('world_cup_matches'[Away Goals])
 )
+
+-- Home Wins
+Home Wins = 
+CALCULATE(
+    COUNTROWS(international_matches),
+    international_matches[Home Goals] > international_matches[Away Goals],
+    international_matches[Home Stadium] = TRUE
+)
+
+-- Top 4 Statistics
+Top 4 Statistics = 
+UNION(
+    SELECTCOLUMNS('world_cups', "Country", 'world_cups'[Winner], "Result", "1st Place"),
+    SELECTCOLUMNS('world_cups', "Country", 'world_cups'[Runners-Up], "Result", "2nd Place"),
+    SELECTCOLUMNS('world_cups', "Country", 'world_cups'[Third], "Result", "3rd Place"),
+    SELECTCOLUMNS('world_cups', "Country", 'world_cups'[Fourth], "Result", "4th Place")
+)
+
 **Author:** hubwied
 [**LinkedIn:**](www.linkedin.com/in/hubert-wiedeński)
